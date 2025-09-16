@@ -1,0 +1,9 @@
+pandas
+jinja2
+matplotlib
+openpyxl
+python-dotenv
+apscheduler
+requests
+fastapi
+uvicorn[standard]
