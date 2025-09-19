@@ -54,13 +54,15 @@ reports/sample_report.pdf
 📊 Example Outputs
 Generated Report (HTML + Charts)
 
-Scheduler Running
+Generated report shown in borwser (1-2)
 
-Demo Execution
+run_demo.py running (3)
 
-Repo Structure
+run_scheduler.py running (4)
 
-Scheduler Usage
+project strcuture (5)
+
+See docs/screenshots for screenshots
 
 To test scheduling in demo mode:
 python -m backend.run_scheduler --test
