@@ -1,0 +1,36 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>{{ title }}</title>
+  <style>
+    body{font-family: Arial, sans-serif; padding: 18px; max-width:1000px; margin:auto;}
+    .table{border-collapse: collapse; width:100%;}
+    .table th, .table td{border:1px solid #ddd; padding:6px; text-align:left;}
+    pre{background:#f6f6f6;padding:10px;border-radius:4px;}
+    .chart img{max-width:100%;height:auto;}
+  </style>
+</head>
+<body>
+  <h1>{{ title }}</h1>
+  <p><small>Generated: {{ generated_on }}</small></p>
+
+  {% if summary_text %}
+  <h2>Summary</h2>
+  <pre>{{ summary_text }}</pre>
+  {% endif %}
+
+  <h2>Statistics</h2>
+  <div>{{ stats_html | safe }}</div>
+
+  <h2>Data (first rows)</h2>
+  <div>{{ table_html | safe }}</div>
+
+  {% if charts %}
+  <h2>Charts</h2>
+  {% for c in charts %}
+    <div class="chart"><img src="{{ c }}" alt="chart"></div>
+  {% endfor %}
+  {% endif %}
+</body>
+</html>

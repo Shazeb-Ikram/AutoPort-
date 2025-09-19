@@ -1,32 +1,74 @@
+# ensure logging is configured before importing other modules that may log
+from backend.utils import setup_logging, get_logger
+setup_logging()
+logger = get_logger(__name__)
+logger.info("Logging initialized for run_demo")
+
 # backend/run_demo.py
-import sys
+import logging
 from pathlib import Path
-sys.path.append(str(Path(__file__).resolve().parents[1]))
-from pathlib import Path
-from backend.data_ingest import load_data
+import pandas as pd
+from dotenv import load_dotenv
 
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
+load_dotenv()  # ensure .env is loaded
 
-def demo_csv():
-    csv_path = PROJECT_ROOT / "examples" / "sample.csv"
-    print("Demo: loading CSV:", csv_path)
-    df = load_data(str(csv_path))
-    print("CSV rows:", len(df), "columns:", df.columns.tolist())
-    print(df.head(3))
-    return df
+# Debug-friendly logging
+from backend.utils import setup_logging, get_logger
+setup_logging()
+log = get_logger("run_demo")
 
-def demo_api():
-    url = "https://jsonplaceholder.typicode.com/todos"
-    print("Demo: loading API:", url)
-    df = load_data(url)
-    print("API rows:", len(df), "columns:", df.columns.tolist())
-    print(df.head(3))
-    return df
+
+# Flexible imports for core modules
+try:
+    from .data_ingest import load_data
+    from .report_generator import generate_report
+    from .summarizer import summarize_dataframe
+except Exception:
+    from backend.data_ingest import load_data
+    from backend.report_generator import generate_report
+    from backend.summarizer import summarize_dataframe
+
+# ✅ Always import notify separately so it’s available
+from backend.notifier import notify
+
+
+def main():
+    print("=== run_demo.py started ===")
+
+    ROOT = Path(__file__).resolve().parent.parent
+    sample_csv = ROOT / "examples" / "sample.csv"
+    print(f"Checking sample CSV at {sample_csv}")
+
+    if not sample_csv.exists():
+        raise FileNotFoundError(f"Could not find {sample_csv}")
+
+    # Load data
+    try:
+        df = load_data(str(sample_csv))
+        print("Data loaded using data_ingest.load_data")
+    except Exception as e:
+        print(f"data_ingest.load_data failed: {e}, falling back to pandas.read_csv")
+        df = pd.read_csv(sample_csv)
+        print("Data loaded using pandas.read_csv")
+
+    # Summarize dataframe
+    summary = summarize_dataframe(df)
+    print("Data summary completed")
+
+    # Generate report
+    report_paths = generate_report(df, summary_text=summary, report_name="sample_report")
+    html_path = str(report_paths["html"])
+    pdf_path = str(report_paths["pdf"]) if report_paths["pdf"] else None
+
+    log.info("Report generated: HTML=%s PDF=%s", html_path, pdf_path)
+
+    # Send notifications
+    errors = notify(report_path=html_path, report_name="sample_report")
+    if errors:
+        print("Notification errors:", errors)
+
+    print("=== run_demo.py finished ===")
+
 
 if __name__ == "__main__":
-    demo_csv()
-    try:
-        demo_api()
-    except Exception as e:
-        print("API demo failed (this is OK if offline):", e)
-    print("Demo complete.")
+    main()

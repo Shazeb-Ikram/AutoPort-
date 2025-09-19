@@ -1,6 +1,7 @@
 # backend/data_ingest.py
 """
 Simple, robust data ingestion helpers for AutoPort (CSV, Excel, JSON, API, logs).
+
 Usage:
     df = load_data("examples/sample.csv")
     df = load_data("examples/sample.xlsx", source_type="excel")
@@ -8,15 +9,15 @@ Usage:
 """
 
 from pathlib import Path
-import json
-import logging
 from typing import Optional, List
-
+import json
 import pandas as pd
 import requests
 
-logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
+from backend.utils import get_logger
+
+# ✅ Single module-level logger
+logger = get_logger(__name__)
 
 
 def _infer_type(source: str, source_type: Optional[str]):
@@ -44,17 +45,14 @@ def load_csv(path: str, **kwargs) -> pd.DataFrame:
 
 def load_excel(path: str, **kwargs) -> pd.DataFrame:
     logger.info("Loading Excel: %s", path)
-    # engine openpyxl required for .xlsx
     return pd.read_excel(path, engine="openpyxl", **kwargs)
 
 
 def load_json(path: str, **kwargs) -> pd.DataFrame:
     logger.info("Loading JSON: %s", path)
     try:
-        # try pandas built-in (supports JSON lines)
         return pd.read_json(path, **kwargs)
     except ValueError:
-        # fallback: parse with json module then normalize
         with open(path, "r", encoding="utf-8") as f:
             data = json.load(f)
         return pd.json_normalize(data)
@@ -68,14 +66,10 @@ def load_api(url: str, timeout: int = 10, **kwargs) -> pd.DataFrame:
     if isinstance(data, list):
         return pd.json_normalize(data)
     if isinstance(data, dict):
-        # sometimes API returns a dict with items under a key
-        # try to find the biggest list inside
         for v in data.values():
             if isinstance(v, list):
                 return pd.json_normalize(v)
-        # fallback: wrap dict
         return pd.json_normalize([data])
-    # fallback
     return pd.DataFrame(data)
 
 
@@ -87,7 +81,6 @@ def parse_log(path: str) -> pd.DataFrame:
             ln = ln.strip()
             if not ln:
                 continue
-            # basic split by whitespace; keep raw line too
             parts = ln.split()
             rows.append({"raw": ln, "parts": parts})
     return pd.DataFrame(rows)
@@ -102,7 +95,12 @@ def validate_df(df: pd.DataFrame, required_columns: Optional[List[str]] = None) 
             raise ValueError(f"Missing required columns: {missing}")
 
 
-def load_data(source: str, source_type: Optional[str] = None, required_columns: Optional[List[str]] = None, **kwargs) -> pd.DataFrame:
+def load_data(
+    source: str,
+    source_type: Optional[str] = None,
+    required_columns: Optional[List[str]] = None,
+    **kwargs,
+) -> pd.DataFrame:
     """
     Universal loader. source can be a file path or an HTTP(s) URL.
     - source_type: 'csv', 'excel', 'json', 'api', 'log' (optional)
@@ -121,5 +119,5 @@ def load_data(source: str, source_type: Optional[str] = None, required_columns: 
 
     df = loader_map[stype](source, **kwargs)
     validate_df(df, required_columns=required_columns)
-    logger.info("Loaded DataFrame: rows=%s cols=%s", len(df), list(df.columns)[:8])
+    logger.info("Loaded DataFrame: rows=%d cols=%s", len(df), list(df.columns)[:8])
     return df

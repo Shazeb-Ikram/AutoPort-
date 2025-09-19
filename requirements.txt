@@ -7,3 +7,6 @@ apscheduler
 requests
 fastapi
 uvicorn[standard]
+plotly
+weasyprint
+apscheduler>=3.10
