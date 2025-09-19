@@ -1,4 +1,3 @@
-# ensure logging is configured before importing other modules that may log
 from backend.utils import setup_logging, get_logger
 setup_logging()
 logger = get_logger(__name__)
@@ -10,15 +9,14 @@ from pathlib import Path
 import pandas as pd
 from dotenv import load_dotenv
 
-load_dotenv()  # ensure .env is loaded
+load_dotenv()  
 
-# Debug-friendly logging
+# logging
 from backend.utils import setup_logging, get_logger
 setup_logging()
 log = get_logger("run_demo")
 
 
-# Flexible imports for core modules
 try:
     from .data_ingest import load_data
     from .report_generator import generate_report

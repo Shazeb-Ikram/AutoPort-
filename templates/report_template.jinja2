@@ -8,7 +8,7 @@
     .table{border-collapse: collapse; width:100%;}
     .table th, .table td{border:1px solid #ddd; padding:6px; text-align:left;}
     pre{background:#f6f6f6;padding:10px;border-radius:4px;}
-    .chart img{max-width:100%;height:auto;}
+    .chart img{max-width:100%;height:auto;display:block;margin-bottom:16px;}
   </style>
 </head>
 <body>
@@ -29,8 +29,9 @@
   {% if charts %}
   <h2>Charts</h2>
   {% for c in charts %}
-    <div class="chart"><img src="{{ c }}" alt="chart"></div>
+    <!-- Force relative path -->
+    <div class="chart"><img <img src="{{ c }}" alt="chart">
+</div>
   {% endfor %}
   {% endif %}
-</body>
-</html>
+</

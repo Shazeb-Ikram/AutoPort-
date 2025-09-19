@@ -20,14 +20,36 @@ def ensure_dirs():
     CHARTS_DIR.mkdir(parents=True, exist_ok=True)
 
 def _save_charts(df: pd.DataFrame) -> list:
-    """
-    Create simple charts for every numeric column.
-    Returns list of relative chart paths (relative to reports dir).
-    """
     charts = []
     nums = df.select_dtypes(include="number")
     if nums.empty:
         return charts
+
+    for col in nums.columns:
+        plt.close("all")
+        fig, ax = plt.subplots()
+        try:
+            if pd.api.types.is_datetime64_any_dtype(df.index):
+                ax.plot(df.index, df[col])
+            else:
+                ax.plot(range(len(df)), df[col])
+            ax.set_title(col)
+            ax.set_xlabel("")
+            ax.set_ylabel(str(col))
+            chart_name = f"{col.replace(' ', '_')}.png"
+            chart_path = CHARTS_DIR / chart_name
+            fig.tight_layout()
+            fig.savefig(chart_path)
+
+            # ✅ relative path for HTML to work
+            charts.append(f"charts/{chart_name}")
+
+            plt.close(fig)
+        except Exception as e:
+            logger.warning("Could not plot column %s: %s", col, e)
+            plt.close(fig)
+    return charts
+
 
     for col in nums.columns:
         plt.close("all")
